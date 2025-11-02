@@ -35,8 +35,54 @@ services:
     container_name: pmp-test-httpbin
     ports:
       - "8081:80"
+
+  # PMP Test API Application
+  app:
+    profiles:
+      - app
+    build:
+      context: .
+      dockerfile: Dockerfile
+    # Alternatively, use the published image:
+    # image: ironedge/pmp-test-api:latest
+    container_name: pmp-test-api
+    ports:
+      - "8080:8080"
+    environment:
+      # Server configuration
+      PORT: 8080
+      RUST_LOG: "info,pmp_test_api=debug"
+
+      # SQL Database Check - PostgreSQL
+      SQL_TESTDB_DRIVER: postgres
+      SQL_TESTDB_HOST: postgres
+      SQL_TESTDB_PORT: 5432
+      SQL_TESTDB_USER: testuser
+      SQL_TESTDB_PASSWORD: testpass
+      SQL_TESTDB_DATABASE: testdb
+
+      # NoSQL Database Check - Redis
+      NOSQL_TESTREDIS_DRIVER: redis
+      NOSQL_TESTREDIS_HOST: redis
+      NOSQL_TESTREDIS_PORT: 6379
+
+      # HTTP API Checks - HTTPBin
+      HTTP_TESTAPI_URL: http://httpbin/status/200
+      HTTP_TESTAPI_METHOD: GET
+      HTTP_TESTAPI_HEADERS: "{}"
+
+      HTTP_TESTAPI2_URL: http://httpbin/headers
+      HTTP_TESTAPI2_METHOD: GET
+      HTTP_TESTAPI2_HEADERS: '{"User-Agent":"pmp-test-api/0.1.0","X-Custom-Header":"test-value"}'
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      httpbin:
+        condition: service_started
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:80/status/200"]
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/_/health"]
       interval: 10s
       timeout: 5s
       retries: 5

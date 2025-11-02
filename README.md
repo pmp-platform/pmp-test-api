@@ -108,7 +108,7 @@ HTTP_TESTAPI_HEADERS={"User-Agent":"pmp-test-api"}
    docker-compose up -d
    ```
 
-   This starts PostgreSQL, Redis, and HTTPBin for testing.
+   This starts PostgreSQL, Redis, and HTTPBin for testing (without the API itself).
 
 3. **Copy environment configuration**:
    ```bash
@@ -169,18 +169,36 @@ docker build -t pmp-test-api .
 docker run -p 8080:8080 pmp-test-api
 ```
 
-### Docker Compose with Application
+### Docker Compose
+
+The docker-compose.yaml includes the API service under the `app` profile, which allows flexible usage:
 
 ```bash
-# Run the entire stack (databases + API)
+# Option 1: Run only test services (postgres, redis, httpbin)
+# Good for local development with cargo run
 docker-compose up -d
 
-# View logs
+# Option 2: Run the entire stack including the API
+# Good for testing the full containerized setup
+docker-compose --profile app up -d
+
+# Build and run the API with latest code changes
+docker-compose --profile app up -d --build
+
+# View logs (all services)
 docker-compose logs -f
+
+# View logs (only app service)
+docker-compose logs -f app
 
 # Stop the stack
 docker-compose down
+
+# Stop and remove volumes
+docker-compose down -v
 ```
+
+**Note**: The `app` service is configured with environment variables to automatically test all services in the docker-compose stack (PostgreSQL, Redis, and HTTPBin).
 
 ## Building for Production
 
