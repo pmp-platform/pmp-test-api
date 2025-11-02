@@ -1,0 +1,46 @@
+[package]
+name = "pmp-test-api"
+version = "0.1.0"
+edition = "2024"
+authors = ["Gustavo Falco"]
+license = "MIT"
+description = "API for platform health and connectivity checks"
+
+[dependencies]
+# Web framework
+axum = "0.7"
+tower = "0.4"
+tower-http = { version = "0.5", features = ["trace", "cors"] }
+
+# Async runtime
+tokio = { version = "1", features = ["full"] }
+futures = "0.3"
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Database - SQL
+sqlx = { version = "0.8", features = ["postgres", "runtime-tokio-rustls"] }
+
+# Database - NoSQL
+redis = { version = "0.26", features = ["tokio-comp", "connection-manager"] }
+
+# HTTP client
+reqwest = { version = "0.12", features = ["json"] }
+
+# Error handling
+anyhow = "1.0"
+thiserror = "1.0"
+
+# Logging and tracing
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+
+# Environment variables
+dotenvy = "0.15"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
