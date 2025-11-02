@@ -44,7 +44,7 @@ USER appuser
 
 # Set environment variables
 ENV PORT=8080
-ENV RUST_LOG=info,pmp_test_api=debug
+ENV RUST_LOG="info,pmp_test_api=debug"
 
 # Expose port
 EXPOSE 8080
