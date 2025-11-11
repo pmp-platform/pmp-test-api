@@ -1,4 +1,4 @@
-use crate::models::{HttpConfig, NoSqlConfig, SqlConfig};
+use crate::models::{HttpConfig, MemoryDBConfig, NoSqlConfig, S3Config, SqlConfig};
 use std::collections::HashMap;
 use std::env;
 
@@ -131,6 +131,84 @@ pub fn parse_http_configs() -> HashMap<String, HttpConfig> {
     }
 
     http_configs
+}
+
+/// Parse S3 bucket configurations from environment variables
+/// Format: S3_{identifier}_{param}
+pub fn parse_s3_configs() -> HashMap<String, S3Config> {
+    let mut configs: HashMap<String, HashMap<String, String>> = HashMap::new();
+
+    // Group environment variables by identifier
+    for (key, value) in env::vars() {
+        if let Some(rest) = key.strip_prefix("S3_") {
+            if let Some((identifier, param)) = rest.split_once('_') {
+                configs
+                    .entry(identifier.to_string())
+                    .or_insert_with(HashMap::new)
+                    .insert(param.to_lowercase(), value);
+            }
+        }
+    }
+
+    // Convert grouped variables into S3Config structs
+    let mut s3_configs = HashMap::new();
+    for (identifier, params) in configs {
+        if let Some(bucket) = params.get("bucket") {
+            // Only parse if bucket is specified
+            let config = S3Config {
+                identifier: identifier.clone(),
+                region: params
+                    .get("region")
+                    .cloned()
+                    .unwrap_or_else(|| "us-east-1".to_string()),
+                bucket: bucket.clone(),
+                access_key_id: params.get("access_key_id").cloned(),
+                secret_access_key: params.get("secret_access_key").cloned(),
+            };
+            s3_configs.insert(identifier, config);
+        }
+    }
+
+    s3_configs
+}
+
+/// Parse MemoryDB configurations from environment variables
+/// Format: MEMORYDB_{identifier}_{param}
+pub fn parse_memorydb_configs() -> HashMap<String, MemoryDBConfig> {
+    let mut configs: HashMap<String, HashMap<String, String>> = HashMap::new();
+
+    // Group environment variables by identifier
+    for (key, value) in env::vars() {
+        if let Some(rest) = key.strip_prefix("MEMORYDB_") {
+            if let Some((identifier, param)) = rest.split_once('_') {
+                configs
+                    .entry(identifier.to_string())
+                    .or_insert_with(HashMap::new)
+                    .insert(param.to_lowercase(), value);
+            }
+        }
+    }
+
+    // Convert grouped variables into MemoryDBConfig structs
+    let mut memorydb_configs = HashMap::new();
+    for (identifier, params) in configs {
+        if let Some(cluster) = params.get("cluster") {
+            // Only parse if cluster is specified
+            let config = MemoryDBConfig {
+                identifier: identifier.clone(),
+                region: params
+                    .get("region")
+                    .cloned()
+                    .unwrap_or_else(|| "us-east-1".to_string()),
+                cluster: cluster.clone(),
+                access_key_id: params.get("access_key_id").cloned(),
+                secret_access_key: params.get("secret_access_key").cloned(),
+            };
+            memorydb_configs.insert(identifier, config);
+        }
+    }
+
+    memorydb_configs
 }
 
 #[cfg(test)]
