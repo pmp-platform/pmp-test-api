@@ -14,13 +14,13 @@ pub fn parse_sql_configs() -> HashMap<String, SqlConfig> {
 
     // Group environment variables by identifier
     for (key, value) in env::vars() {
-        if let Some(rest) = key.strip_prefix("SQL_") {
-            if let Some((identifier, param)) = rest.split_once('_') {
-                configs
-                    .entry(identifier.to_string())
-                    .or_insert_with(HashMap::new)
-                    .insert(param.to_lowercase(), value);
-            }
+        if let Some(rest) = key.strip_prefix("SQL_")
+            && let Some((identifier, param)) = rest.split_once('_')
+        {
+            configs
+                .entry(identifier.to_string())
+                .or_default()
+                .insert(param.to_lowercase(), value);
         }
     }
 
@@ -64,13 +64,13 @@ pub fn parse_nosql_configs() -> HashMap<String, NoSqlConfig> {
 
     // Group environment variables by identifier
     for (key, value) in env::vars() {
-        if let Some(rest) = key.strip_prefix("NOSQL_") {
-            if let Some((identifier, param)) = rest.split_once('_') {
-                configs
-                    .entry(identifier.to_string())
-                    .or_insert_with(HashMap::new)
-                    .insert(param.to_lowercase(), value);
-            }
+        if let Some(rest) = key.strip_prefix("NOSQL_")
+            && let Some((identifier, param)) = rest.split_once('_')
+        {
+            configs
+                .entry(identifier.to_string())
+                .or_default()
+                .insert(param.to_lowercase(), value);
         }
     }
 
@@ -106,13 +106,13 @@ pub fn parse_http_configs() -> HashMap<String, HttpConfig> {
 
     // Group environment variables by identifier
     for (key, value) in env::vars() {
-        if let Some(rest) = key.strip_prefix("HTTP_") {
-            if let Some((identifier, param)) = rest.split_once('_') {
-                configs
-                    .entry(identifier.to_string())
-                    .or_insert_with(HashMap::new)
-                    .insert(param.to_lowercase(), value);
-            }
+        if let Some(rest) = key.strip_prefix("HTTP_")
+            && let Some((identifier, param)) = rest.split_once('_')
+        {
+            configs
+                .entry(identifier.to_string())
+                .or_default()
+                .insert(param.to_lowercase(), value);
         }
     }
 
@@ -152,13 +152,13 @@ pub fn parse_s3_configs() -> HashMap<String, S3Config> {
 
     // Group environment variables by identifier
     for (key, value) in env::vars() {
-        if let Some(rest) = key.strip_prefix("S3_") {
-            if let Some((identifier, param)) = rest.split_once('_') {
-                configs
-                    .entry(identifier.to_string())
-                    .or_insert_with(HashMap::new)
-                    .insert(param.to_lowercase(), value);
-            }
+        if let Some(rest) = key.strip_prefix("S3_")
+            && let Some((identifier, param)) = rest.split_once('_')
+        {
+            configs
+                .entry(identifier.to_string())
+                .or_default()
+                .insert(param.to_lowercase(), value);
         }
     }
 
@@ -191,13 +191,13 @@ pub fn parse_memorydb_configs() -> HashMap<String, MemoryDBConfig> {
 
     // Group environment variables by identifier
     for (key, value) in env::vars() {
-        if let Some(rest) = key.strip_prefix("MEMORYDB_") {
-            if let Some((identifier, param)) = rest.split_once('_') {
-                configs
-                    .entry(identifier.to_string())
-                    .or_insert_with(HashMap::new)
-                    .insert(param.to_lowercase(), value);
-            }
+        if let Some(rest) = key.strip_prefix("MEMORYDB_")
+            && let Some((identifier, param)) = rest.split_once('_')
+        {
+            configs
+                .entry(identifier.to_string())
+                .or_default()
+                .insert(param.to_lowercase(), value);
         }
     }
 
