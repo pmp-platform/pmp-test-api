@@ -1,7 +1,7 @@
 use crate::models::{MemoryDBCheckResult, MemoryDBConfig};
 use aws_config::BehaviorVersion;
-use aws_sdk_memorydb::config::Region;
 use aws_sdk_memorydb::Client;
+use aws_sdk_memorydb::config::Region;
 use tracing::{debug, error, info, instrument};
 
 /// Check a MemoryDB cluster and retrieve information
@@ -13,22 +13,22 @@ pub async fn check_memorydb(config: MemoryDBConfig) -> MemoryDBCheckResult {
     let region_str = config.region.clone();
 
     // Set up AWS configuration
-    let mut aws_config_builder = aws_config::defaults(BehaviorVersion::latest())
-        .region(Region::new(region_str.clone()));
+    let mut aws_config_builder =
+        aws_config::defaults(BehaviorVersion::latest()).region(Region::new(region_str.clone()));
 
     // Use custom credentials if provided
     if let (Some(access_key_id), Some(secret_access_key)) =
-        (&config.access_key_id, &config.secret_access_key) {
+        (&config.access_key_id, &config.secret_access_key)
+    {
         debug!("Using custom AWS credentials");
-        aws_config_builder = aws_config_builder.credentials_provider(
-            aws_sdk_memorydb::config::Credentials::new(
+        aws_config_builder =
+            aws_config_builder.credentials_provider(aws_sdk_memorydb::config::Credentials::new(
                 access_key_id,
                 secret_access_key,
                 None,
                 None,
                 "env",
-            )
-        );
+            ));
     }
 
     let aws_config = aws_config_builder.load().await;

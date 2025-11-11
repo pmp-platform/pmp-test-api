@@ -53,7 +53,7 @@ async fn check_postgres(config: SqlConfig) -> SqlCheckResult {
                 "SELECT table_name
                  FROM information_schema.tables
                  WHERE table_schema = 'public'
-                 ORDER BY table_name"
+                 ORDER BY table_name",
             )
             .fetch_all(&pool)
             .await;
@@ -128,7 +128,7 @@ async fn check_mysql(config: SqlConfig) -> SqlCheckResult {
                 "SELECT table_name
                  FROM information_schema.tables
                  WHERE table_schema = ?
-                 ORDER BY table_name"
+                 ORDER BY table_name",
             )
             .bind(&config.database)
             .fetch_all(&pool)

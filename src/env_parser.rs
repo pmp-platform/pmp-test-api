@@ -32,14 +32,23 @@ pub fn parse_sql_configs() -> HashMap<String, SqlConfig> {
             let config = SqlConfig {
                 identifier: identifier.clone(),
                 driver: driver.clone(),
-                host: params.get("host").cloned().unwrap_or_else(|| "localhost".to_string()),
+                host: params
+                    .get("host")
+                    .cloned()
+                    .unwrap_or_else(|| "localhost".to_string()),
                 port: params
                     .get("port")
                     .and_then(|p| p.parse().ok())
                     .unwrap_or(5432),
-                user: params.get("user").cloned().unwrap_or_else(|| "postgres".to_string()),
+                user: params
+                    .get("user")
+                    .cloned()
+                    .unwrap_or_else(|| "postgres".to_string()),
                 password: params.get("password").cloned().unwrap_or_default(),
-                database: params.get("database").cloned().unwrap_or_else(|| "postgres".to_string()),
+                database: params
+                    .get("database")
+                    .cloned()
+                    .unwrap_or_else(|| "postgres".to_string()),
             };
             sql_configs.insert(identifier, config);
         }
@@ -73,7 +82,10 @@ pub fn parse_nosql_configs() -> HashMap<String, NoSqlConfig> {
             let config = NoSqlConfig {
                 identifier: identifier.clone(),
                 driver: driver.clone(),
-                host: params.get("host").cloned().unwrap_or_else(|| "localhost".to_string()),
+                host: params
+                    .get("host")
+                    .cloned()
+                    .unwrap_or_else(|| "localhost".to_string()),
                 port: params
                     .get("port")
                     .and_then(|p| p.parse().ok())
