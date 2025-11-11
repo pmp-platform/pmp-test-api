@@ -18,6 +18,14 @@ pub struct InfoResponse {
     /// HTTP API check results, keyed by identifier
     #[serde(skip_serializing_if = "Option::is_none")]
     pub http: Option<HashMap<String, HttpCheckResult>>,
+
+    /// S3 bucket check results, keyed by identifier
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub s3: Option<HashMap<String, S3CheckResult>>,
+
+    /// MemoryDB check results, keyed by identifier
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub memorydb: Option<HashMap<String, MemoryDBCheckResult>>,
 }
 
 /// Result of checking a SQL database connection
@@ -129,4 +137,78 @@ pub struct HttpConfig {
     pub url: String,
     pub method: String,
     pub headers: HashMap<String, String>,
+}
+
+/// Result of checking an S3 bucket
+#[derive(Debug, Serialize, Deserialize)]
+pub struct S3CheckResult {
+    /// Whether the connection was successful
+    pub success: bool,
+
+    /// AWS region
+    pub region: String,
+
+    /// Bucket name
+    pub bucket: String,
+
+    /// Whether the bucket exists and is accessible
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub exists: Option<bool>,
+
+    /// Number of objects in the bucket (if accessible)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub object_count: Option<usize>,
+
+    /// Error message if check failed
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub error: Option<String>,
+}
+
+/// Result of checking a MemoryDB connection
+#[derive(Debug, Serialize, Deserialize)]
+pub struct MemoryDBCheckResult {
+    /// Whether the connection was successful
+    pub success: bool,
+
+    /// AWS region
+    pub region: String,
+
+    /// Cluster name
+    pub cluster: String,
+
+    /// Cluster endpoint
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub endpoint: Option<String>,
+
+    /// Cluster status
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub status: Option<String>,
+
+    /// Number of nodes in the cluster
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub node_count: Option<usize>,
+
+    /// Error message if check failed
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub error: Option<String>,
+}
+
+/// Parsed S3 bucket configuration from environment variables
+#[derive(Debug, Clone)]
+pub struct S3Config {
+    pub identifier: String,
+    pub region: String,
+    pub bucket: String,
+    pub access_key_id: Option<String>,
+    pub secret_access_key: Option<String>,
+}
+
+/// Parsed MemoryDB configuration from environment variables
+#[derive(Debug, Clone)]
+pub struct MemoryDBConfig {
+    pub identifier: String,
+    pub region: String,
+    pub cluster: String,
+    pub access_key_id: Option<String>,
+    pub secret_access_key: Option<String>,
 }
