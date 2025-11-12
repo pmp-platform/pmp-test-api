@@ -1,7 +1,11 @@
-use crate::check::{check_http, check_memorydb, check_nosql, check_s3, check_sql};
+use crate::check::{
+    check_bedrock, check_dynamodb, check_http, check_memorydb, check_nosql, check_s3,
+    check_secrets_manager, check_sql,
+};
 use crate::env_parser::{
-    get_all_env_vars, parse_http_configs, parse_memorydb_configs, parse_nosql_configs,
-    parse_s3_configs, parse_sql_configs,
+    get_all_env_vars, parse_bedrock_configs, parse_dynamodb_configs, parse_http_configs,
+    parse_memorydb_configs, parse_nosql_configs, parse_s3_configs, parse_secrets_manager_configs,
+    parse_sql_configs,
 };
 use crate::models::InfoResponse;
 use axum::Json;
@@ -23,6 +27,9 @@ pub async fn info_handler() -> Json<InfoResponse> {
     let http_configs = parse_http_configs();
     let s3_configs = parse_s3_configs();
     let memorydb_configs = parse_memorydb_configs();
+    let secrets_manager_configs = parse_secrets_manager_configs();
+    let dynamodb_configs = parse_dynamodb_configs();
+    let bedrock_configs = parse_bedrock_configs();
 
     // Run all SQL checks concurrently
     let sql_results = if !sql_configs.is_empty() {
@@ -109,6 +116,57 @@ pub async fn info_handler() -> Json<InfoResponse> {
         None
     };
 
+    // Run all Secrets Manager checks concurrently
+    let secrets_manager_results = if !secrets_manager_configs.is_empty() {
+        let mut tasks = Vec::new();
+
+        for (identifier, config) in secrets_manager_configs {
+            tasks.push(async move {
+                let result = check_secrets_manager(config).await;
+                (identifier, result)
+            });
+        }
+
+        let results = futures::future::join_all(tasks).await;
+        Some(results.into_iter().collect::<HashMap<_, _>>())
+    } else {
+        None
+    };
+
+    // Run all DynamoDB checks concurrently
+    let dynamodb_results = if !dynamodb_configs.is_empty() {
+        let mut tasks = Vec::new();
+
+        for (identifier, config) in dynamodb_configs {
+            tasks.push(async move {
+                let result = check_dynamodb(config).await;
+                (identifier, result)
+            });
+        }
+
+        let results = futures::future::join_all(tasks).await;
+        Some(results.into_iter().collect::<HashMap<_, _>>())
+    } else {
+        None
+    };
+
+    // Run all Bedrock checks concurrently
+    let bedrock_results = if !bedrock_configs.is_empty() {
+        let mut tasks = Vec::new();
+
+        for (identifier, config) in bedrock_configs {
+            tasks.push(async move {
+                let result = check_bedrock(config).await;
+                (identifier, result)
+            });
+        }
+
+        let results = futures::future::join_all(tasks).await;
+        Some(results.into_iter().collect::<HashMap<_, _>>())
+    } else {
+        None
+    };
+
     info!("Info request completed");
 
     Json(InfoResponse {
@@ -118,5 +176,8 @@ pub async fn info_handler() -> Json<InfoResponse> {
         http: http_results,
         s3: s3_results,
         memorydb: memorydb_results,
+        secrets_manager: secrets_manager_results,
+        dynamodb: dynamodb_results,
+        bedrock: bedrock_results,
     })
 }
