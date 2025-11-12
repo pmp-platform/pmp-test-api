@@ -26,6 +26,18 @@ pub struct InfoResponse {
     /// MemoryDB check results, keyed by identifier
     #[serde(skip_serializing_if = "Option::is_none")]
     pub memorydb: Option<HashMap<String, MemoryDBCheckResult>>,
+
+    /// AWS Secrets Manager check results, keyed by identifier
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub secrets_manager: Option<HashMap<String, SecretsManagerCheckResult>>,
+
+    /// DynamoDB check results, keyed by identifier
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub dynamodb: Option<HashMap<String, DynamoDBCheckResult>>,
+
+    /// Bedrock check results, keyed by identifier
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub bedrock: Option<HashMap<String, BedrockCheckResult>>,
 }
 
 /// Result of checking a SQL database connection
@@ -209,6 +221,111 @@ pub struct MemoryDBConfig {
     pub identifier: String,
     pub region: String,
     pub cluster: String,
+    pub access_key_id: Option<String>,
+    pub secret_access_key: Option<String>,
+}
+
+/// Result of checking AWS Secrets Manager
+#[derive(Debug, Serialize, Deserialize)]
+pub struct SecretsManagerCheckResult {
+    /// Whether the connection was successful
+    pub success: bool,
+
+    /// AWS region
+    pub region: String,
+
+    /// Secret name
+    pub secret_name: String,
+
+    /// Whether the secret exists and is accessible
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub exists: Option<bool>,
+
+    /// Secret version ID (if accessible)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub version_id: Option<String>,
+
+    /// Error message if check failed
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub error: Option<String>,
+}
+
+/// Result of checking a DynamoDB table
+#[derive(Debug, Serialize, Deserialize)]
+pub struct DynamoDBCheckResult {
+    /// Whether the connection was successful
+    pub success: bool,
+
+    /// AWS region
+    pub region: String,
+
+    /// Table name
+    pub table: String,
+
+    /// Table status
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub status: Option<String>,
+
+    /// Item count (approximate)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub item_count: Option<i64>,
+
+    /// Table size in bytes
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub table_size_bytes: Option<i64>,
+
+    /// Error message if check failed
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub error: Option<String>,
+}
+
+/// Result of checking AWS Bedrock
+#[derive(Debug, Serialize, Deserialize)]
+pub struct BedrockCheckResult {
+    /// Whether the connection was successful
+    pub success: bool,
+
+    /// AWS region
+    pub region: String,
+
+    /// Number of foundation models available
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub model_count: Option<usize>,
+
+    /// List of available model IDs
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub models: Option<Vec<String>>,
+
+    /// Error message if check failed
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub error: Option<String>,
+}
+
+/// Parsed AWS Secrets Manager configuration from environment variables
+#[derive(Debug, Clone)]
+pub struct SecretsManagerConfig {
+    pub identifier: String,
+    pub region: String,
+    pub secret_name: String,
+    pub access_key_id: Option<String>,
+    pub secret_access_key: Option<String>,
+}
+
+/// Parsed DynamoDB configuration from environment variables
+#[derive(Debug, Clone)]
+pub struct DynamoDBConfig {
+    pub identifier: String,
+    pub region: String,
+    pub table: String,
+    pub access_key_id: Option<String>,
+    pub secret_access_key: Option<String>,
+}
+
+/// Parsed AWS Bedrock configuration from environment variables
+#[derive(Debug, Clone)]
+pub struct BedrockConfig {
+    pub identifier: String,
+    pub region: String,
     pub access_key_id: Option<String>,
     pub secret_access_key: Option<String>,
 }

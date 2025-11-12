@@ -1,4 +1,7 @@
-use crate::models::{HttpConfig, MemoryDBConfig, NoSqlConfig, S3Config, SqlConfig};
+use crate::models::{
+    BedrockConfig, DynamoDBConfig, HttpConfig, MemoryDBConfig, NoSqlConfig, S3Config,
+    SecretsManagerConfig, SqlConfig,
+};
 use std::collections::HashMap;
 use std::env;
 
@@ -221,6 +224,120 @@ pub fn parse_memorydb_configs() -> HashMap<String, MemoryDBConfig> {
     }
 
     memorydb_configs
+}
+
+/// Parse AWS Secrets Manager configurations from environment variables
+/// Format: SECRETS_{identifier}_{param}
+pub fn parse_secrets_manager_configs() -> HashMap<String, SecretsManagerConfig> {
+    let mut configs: HashMap<String, HashMap<String, String>> = HashMap::new();
+
+    // Group environment variables by identifier
+    for (key, value) in env::vars() {
+        if let Some(rest) = key.strip_prefix("SECRETS_")
+            && let Some((identifier, param)) = rest.split_once('_')
+        {
+            configs
+                .entry(identifier.to_string())
+                .or_default()
+                .insert(param.to_lowercase(), value);
+        }
+    }
+
+    // Convert grouped variables into SecretsManagerConfig structs
+    let mut secrets_configs = HashMap::new();
+    for (identifier, params) in configs {
+        if let Some(secret_name) = params.get("secret_name") {
+            // Only parse if secret_name is specified
+            let config = SecretsManagerConfig {
+                identifier: identifier.clone(),
+                region: params
+                    .get("region")
+                    .cloned()
+                    .unwrap_or_else(|| "us-east-1".to_string()),
+                secret_name: secret_name.clone(),
+                access_key_id: params.get("access_key_id").cloned(),
+                secret_access_key: params.get("secret_access_key").cloned(),
+            };
+            secrets_configs.insert(identifier, config);
+        }
+    }
+
+    secrets_configs
+}
+
+/// Parse DynamoDB configurations from environment variables
+/// Format: DYNAMODB_{identifier}_{param}
+pub fn parse_dynamodb_configs() -> HashMap<String, DynamoDBConfig> {
+    let mut configs: HashMap<String, HashMap<String, String>> = HashMap::new();
+
+    // Group environment variables by identifier
+    for (key, value) in env::vars() {
+        if let Some(rest) = key.strip_prefix("DYNAMODB_")
+            && let Some((identifier, param)) = rest.split_once('_')
+        {
+            configs
+                .entry(identifier.to_string())
+                .or_default()
+                .insert(param.to_lowercase(), value);
+        }
+    }
+
+    // Convert grouped variables into DynamoDBConfig structs
+    let mut dynamodb_configs = HashMap::new();
+    for (identifier, params) in configs {
+        if let Some(table) = params.get("table") {
+            // Only parse if table is specified
+            let config = DynamoDBConfig {
+                identifier: identifier.clone(),
+                region: params
+                    .get("region")
+                    .cloned()
+                    .unwrap_or_else(|| "us-east-1".to_string()),
+                table: table.clone(),
+                access_key_id: params.get("access_key_id").cloned(),
+                secret_access_key: params.get("secret_access_key").cloned(),
+            };
+            dynamodb_configs.insert(identifier, config);
+        }
+    }
+
+    dynamodb_configs
+}
+
+/// Parse AWS Bedrock configurations from environment variables
+/// Format: BEDROCK_{identifier}_{param}
+pub fn parse_bedrock_configs() -> HashMap<String, BedrockConfig> {
+    let mut configs: HashMap<String, HashMap<String, String>> = HashMap::new();
+
+    // Group environment variables by identifier
+    for (key, value) in env::vars() {
+        if let Some(rest) = key.strip_prefix("BEDROCK_")
+            && let Some((identifier, param)) = rest.split_once('_')
+        {
+            configs
+                .entry(identifier.to_string())
+                .or_default()
+                .insert(param.to_lowercase(), value);
+        }
+    }
+
+    // Convert grouped variables into BedrockConfig structs
+    let mut bedrock_configs = HashMap::new();
+    for (identifier, params) in configs {
+        // Bedrock only requires region (and optional credentials)
+        let config = BedrockConfig {
+            identifier: identifier.clone(),
+            region: params
+                .get("region")
+                .cloned()
+                .unwrap_or_else(|| "us-east-1".to_string()),
+            access_key_id: params.get("access_key_id").cloned(),
+            secret_access_key: params.get("secret_access_key").cloned(),
+        };
+        bedrock_configs.insert(identifier, config);
+    }
+
+    bedrock_configs
 }
 
 #[cfg(test)]

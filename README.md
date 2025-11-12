@@ -5,9 +5,14 @@ A Rust API for platform health checks and connectivity validation. This API help
 ## Features
 
 - **Health Check**: Simple endpoint to verify the API is running
-- **SQL Database Checks**: Connect to and verify SQL databases (PostgreSQL support)
+- **SQL Database Checks**: Connect to and verify SQL databases (PostgreSQL, MySQL support)
 - **NoSQL Database Checks**: Connect to and verify NoSQL databases (Redis support)
 - **HTTP API Checks**: Make requests to external APIs and return responses
+- **AWS S3 Checks**: Verify S3 bucket accessibility and list objects
+- **AWS MemoryDB Checks**: Check MemoryDB cluster status and configuration
+- **AWS Secrets Manager Checks**: Verify secret accessibility and retrieve metadata
+- **AWS DynamoDB Checks**: Check DynamoDB table status and statistics
+- **AWS Bedrock Checks**: List available foundation models
 - **Environment Inspection**: View all environment variables
 - **Concurrent Checks**: All database and API checks run in parallel for optimal performance
 
@@ -28,6 +33,11 @@ Comprehensive platform information and connectivity checks.
 - `sql`: SQL database check results (if configured)
 - `nosql`: NoSQL database check results (if configured)
 - `http`: HTTP API check results (if configured)
+- `s3`: S3 bucket check results (if configured)
+- `memorydb`: MemoryDB cluster check results (if configured)
+- `secrets_manager`: Secrets Manager check results (if configured)
+- `dynamodb`: DynamoDB table check results (if configured)
+- `bedrock`: Bedrock check results (if configured)
 
 ## Configuration
 
@@ -38,14 +48,14 @@ Configure checks using environment variables with specific prefixes:
 Format: `SQL_{identifier}_{param}`
 
 **Required variables:**
-- `SQL_{id}_DRIVER`: Database driver (currently supports: `postgres`)
-- `SQL_{id}_HOST`: Database host
-- `SQL_{id}_PORT`: Database port
-- `SQL_{id}_USER`: Database username
+- `SQL_{id}_DRIVER`: Database driver (supports: `postgres`, `mysql`)
+- `SQL_{id}_HOST`: Database host (default: `localhost`)
+- `SQL_{id}_PORT`: Database port (default: `5432` for PostgreSQL, `3306` for MySQL)
+- `SQL_{id}_USER`: Database username (default: `postgres`)
 - `SQL_{id}_PASSWORD`: Database password
-- `SQL_{id}_DATABASE`: Database name
+- `SQL_{id}_DATABASE`: Database name (default: `postgres`)
 
-**Example:**
+**Example (PostgreSQL):**
 ```bash
 SQL_MYDB_DRIVER=postgres
 SQL_MYDB_HOST=localhost
@@ -53,6 +63,16 @@ SQL_MYDB_PORT=5432
 SQL_MYDB_USER=testuser
 SQL_MYDB_PASSWORD=testpass
 SQL_MYDB_DATABASE=testdb
+```
+
+**Example (MySQL):**
+```bash
+SQL_MYSQLDB_DRIVER=mysql
+SQL_MYSQLDB_HOST=localhost
+SQL_MYSQLDB_PORT=3306
+SQL_MYSQLDB_USER=root
+SQL_MYSQLDB_PASSWORD=rootpass
+SQL_MYSQLDB_DATABASE=mydb
 ```
 
 ### NoSQL Database Checks
@@ -86,6 +106,94 @@ Format: `HTTP_{identifier}_{param}`
 HTTP_TESTAPI_URL=http://localhost:8081/status/200
 HTTP_TESTAPI_METHOD=GET
 HTTP_TESTAPI_HEADERS={"User-Agent":"pmp-test-api"}
+```
+
+### S3 Bucket Checks
+
+Format: `S3_{identifier}_{param}`
+
+**Required variables:**
+- `S3_{id}_BUCKET`: S3 bucket name
+
+**Optional variables:**
+- `S3_{id}_REGION`: AWS region (default: `us-east-1`)
+- `S3_{id}_ACCESS_KEY_ID`: AWS access key ID (uses default credentials if not provided)
+- `S3_{id}_SECRET_ACCESS_KEY`: AWS secret access key
+
+**Example:**
+```bash
+S3_MYBUCKET_BUCKET=my-app-bucket
+S3_MYBUCKET_REGION=us-west-2
+S3_MYBUCKET_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE
+S3_MYBUCKET_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+```
+
+### MemoryDB Checks
+
+Format: `MEMORYDB_{identifier}_{param}`
+
+**Required variables:**
+- `MEMORYDB_{id}_CLUSTER`: MemoryDB cluster name
+
+**Optional variables:**
+- `MEMORYDB_{id}_REGION`: AWS region (default: `us-east-1`)
+- `MEMORYDB_{id}_ACCESS_KEY_ID`: AWS access key ID
+- `MEMORYDB_{id}_SECRET_ACCESS_KEY`: AWS secret access key
+
+**Example:**
+```bash
+MEMORYDB_CACHE_CLUSTER=my-memorydb-cluster
+MEMORYDB_CACHE_REGION=us-east-1
+```
+
+### AWS Secrets Manager Checks
+
+Format: `SECRETS_{identifier}_{param}`
+
+**Required variables:**
+- `SECRETS_{id}_SECRET_NAME`: Secret name or ARN
+
+**Optional variables:**
+- `SECRETS_{id}_REGION`: AWS region (default: `us-east-1`)
+- `SECRETS_{id}_ACCESS_KEY_ID`: AWS access key ID
+- `SECRETS_{id}_SECRET_ACCESS_KEY`: AWS secret access key
+
+**Example:**
+```bash
+SECRETS_APIKEY_SECRET_NAME=production/api/key
+SECRETS_APIKEY_REGION=us-east-1
+```
+
+### DynamoDB Checks
+
+Format: `DYNAMODB_{identifier}_{param}`
+
+**Required variables:**
+- `DYNAMODB_{id}_TABLE`: DynamoDB table name
+
+**Optional variables:**
+- `DYNAMODB_{id}_REGION`: AWS region (default: `us-east-1`)
+- `DYNAMODB_{id}_ACCESS_KEY_ID`: AWS access key ID
+- `DYNAMODB_{id}_SECRET_ACCESS_KEY`: AWS secret access key
+
+**Example:**
+```bash
+DYNAMODB_USERS_TABLE=users-table
+DYNAMODB_USERS_REGION=us-east-1
+```
+
+### AWS Bedrock Checks
+
+Format: `BEDROCK_{identifier}_{param}`
+
+**Optional variables:**
+- `BEDROCK_{id}_REGION`: AWS region (default: `us-east-1`)
+- `BEDROCK_{id}_ACCESS_KEY_ID`: AWS access key ID
+- `BEDROCK_{id}_SECRET_ACCESS_KEY`: AWS secret access key
+
+**Example:**
+```bash
+BEDROCK_MAIN_REGION=us-east-1
 ```
 
 ## Quick Start

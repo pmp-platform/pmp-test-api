@@ -44,6 +44,9 @@ dotenvy = "0.15"
 aws-config = { version = "1.5", features = ["behavior-version-latest"] }
 aws-sdk-s3 = "1.60"
 aws-sdk-memorydb = "1.48"
+aws-sdk-secretsmanager = "1.60"
+aws-sdk-dynamodb = "1.60"
+aws-sdk-bedrock = "1.60"
 
 [profile.release]
 opt-level = 3
