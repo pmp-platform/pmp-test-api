@@ -28,10 +28,10 @@ fn parse_sensitive_env_config() -> (Vec<String>, Vec<Regex>) {
         for pattern in sensitive_patterns.split(',') {
             let trimmed = pattern.trim();
 
-            if !trimmed.is_empty() {
-                if let Ok(regex) = Regex::new(trimmed) {
-                    patterns.push(regex);
-                }
+            if !trimmed.is_empty()
+                && let Ok(regex) = Regex::new(trimmed)
+            {
+                patterns.push(regex);
             }
         }
     }
