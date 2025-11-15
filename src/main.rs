@@ -44,8 +44,9 @@ async fn main() -> anyhow::Result<()> {
     let listener = TcpListener::bind(&addr).await?;
 
     info!("Server listening on {}", addr);
-    info!("Health endpoint: http://{}/_{}/health", addr, "/");
-    info!("Info endpoint: http://{}/_{}/info", addr, "/");
+    info!("Dashboard: http://{}/", addr);
+    info!("Health endpoint: http://{}/_/health", addr);
+    info!("Info endpoint: http://{}/_/info", addr);
 
     // Start the server
     axum::serve(listener, app).await?;

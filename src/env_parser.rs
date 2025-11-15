@@ -2,12 +2,73 @@ use crate::models::{
     BedrockConfig, DynamoDBConfig, HttpConfig, MemoryDBConfig, NoSqlConfig, S3Config,
     SecretsManagerConfig, SqlConfig,
 };
+use regex::Regex;
 use std::collections::HashMap;
 use std::env;
 
+/// Parse sensitive environment configuration
+/// Returns a tuple of (explicit names, regex patterns)
+fn parse_sensitive_env_config() -> (Vec<String>, Vec<Regex>) {
+    let mut explicit_names = Vec::new();
+    let mut patterns = Vec::new();
+
+    // Check for explicit environment variable names
+    if let Ok(sensitive_envs) = env::var("SENSITIVE_ENVIRONMENTS") {
+        for name in sensitive_envs.split(',') {
+            let trimmed = name.trim();
+
+            if !trimmed.is_empty() {
+                explicit_names.push(trimmed.to_uppercase());
+            }
+        }
+    }
+
+    // Check for regex patterns
+    if let Ok(sensitive_patterns) = env::var("SENSITIVE_ENVIRONMENTS_REGEX") {
+        for pattern in sensitive_patterns.split(',') {
+            let trimmed = pattern.trim();
+
+            if !trimmed.is_empty() {
+                if let Ok(regex) = Regex::new(trimmed) {
+                    patterns.push(regex);
+                }
+            }
+        }
+    }
+
+    (explicit_names, patterns)
+}
+
+/// Check if an environment variable name is sensitive
+fn is_sensitive(key: &str, explicit_names: &[String], patterns: &[Regex]) -> bool {
+    let key_upper = key.to_uppercase();
+
+    // Check explicit names (case-insensitive)
+    if explicit_names.iter().any(|name| name == &key_upper) {
+        return true;
+    }
+
+    // Check regex patterns
+    patterns.iter().any(|pattern| pattern.is_match(key))
+}
+
 /// Parse all environment variables and return them as a HashMap
+/// Sensitive environment variables will have their values redacted
 pub fn get_all_env_vars() -> HashMap<String, String> {
-    env::vars().collect()
+    let (explicit_names, patterns) = parse_sensitive_env_config();
+    let mut result = HashMap::new();
+
+    for (key, value) in env::vars() {
+        let display_value = if is_sensitive(&key, &explicit_names, &patterns) {
+            "(value is set)".to_string()
+        } else {
+            value
+        };
+
+        result.insert(key, display_value);
+    }
+
+    result
 }
 
 /// Parse SQL database configurations from environment variables
