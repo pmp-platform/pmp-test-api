@@ -40,6 +40,7 @@ services:
   app:
     profiles:
       - app
+      - integration-tests
     build:
       context: .
       dockerfile: Dockerfile
@@ -86,3 +87,16 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+
+  # Hurl Integration Tests
+  hurl:
+    profiles:
+      - integration-tests
+    image: orangeopensource/hurl:1.8.0
+    container_name: pmp-test-hurl
+    volumes:
+      - ./resources/integration-tests:/tests:ro
+    depends_on:
+      app:
+        condition: service_healthy
+    command: --test --glob "/tests/**/*.hurl"

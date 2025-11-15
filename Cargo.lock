@@ -2199,6 +2199,7 @@ dependencies = [
  "dotenvy",
  "futures",
  "redis",
+ "regex",
  "reqwest",
  "serde",
  "serde_json",

@@ -4,6 +4,7 @@ A Rust API for platform health checks and connectivity validation. This API help
 
 ## Features
 
+- **Beautiful Web UI**: Modern, responsive dashboard displaying all system information and checks
 - **Health Check**: Simple endpoint to verify the API is running
 - **SQL Database Checks**: Connect to and verify SQL databases (PostgreSQL, MySQL support)
 - **NoSQL Database Checks**: Connect to and verify NoSQL databases (Redis support)
@@ -13,10 +14,23 @@ A Rust API for platform health checks and connectivity validation. This API help
 - **AWS Secrets Manager Checks**: Verify secret accessibility and retrieve metadata
 - **AWS DynamoDB Checks**: Check DynamoDB table status and statistics
 - **AWS Bedrock Checks**: List available foundation models
-- **Environment Inspection**: View all environment variables
+- **Environment Inspection**: View all environment variables with optional sensitive value redaction
+- **Security**: Configure sensitive environment variables to be redacted (by name or regex pattern)
 - **Concurrent Checks**: All database and API checks run in parallel for optimal performance
 
 ## Endpoints
+
+### `GET /`
+
+Beautiful web UI displaying system information and connectivity checks in real-time.
+
+**Features**:
+- Clean, modern interface with responsive design
+- Real-time data from the `/_/info` endpoint
+- Auto-refresh every 30 seconds
+- Color-coded status badges for quick health assessment
+- Organized sections for environment variables and all check types
+- Mobile-friendly layout
 
 ### `GET /_/health`
 
@@ -26,10 +40,10 @@ Simple health check endpoint.
 
 ### `GET /_/info`
 
-Comprehensive platform information and connectivity checks.
+Comprehensive platform information and connectivity checks (JSON API).
 
 **Response**: JSON object containing:
-- `environments`: All environment variables
+- `environments`: All environment variables (with sensitive values redacted if configured)
 - `sql`: SQL database check results (if configured)
 - `nosql`: NoSQL database check results (if configured)
 - `http`: HTTP API check results (if configured)
@@ -213,12 +227,12 @@ BEDROCK_MAIN_REGION=us-east-1
 
 2. **Start test services**:
    ```bash
-   docker-compose up -d
+   ./bin/up.sh
    ```
 
    This starts PostgreSQL, Redis, and HTTPBin for testing (without the API itself).
 
-3. **Copy environment configuration**:
+3. **Copy environment configuration** (if .env.example exists):
    ```bash
    cp .env.example .env
    ```
@@ -232,11 +246,19 @@ BEDROCK_MAIN_REGION=us-east-1
 
 5. **Test the endpoints**:
    ```bash
+   # Dashboard UI
+   open http://localhost:8080/
+
    # Health check
    curl http://localhost:8080/_/health
 
    # Platform info and checks
    curl http://localhost:8080/_/info | jq
+   ```
+
+6. **Stop services**:
+   ```bash
+   ./bin/down.sh
    ```
 
 ## Environment Variables
@@ -245,6 +267,55 @@ BEDROCK_MAIN_REGION=us-east-1
 
 - `PORT`: Server port (default: `8080`)
 - `RUST_LOG`: Logging level (default: `info,pmp_test_api=debug`)
+
+### Sensitive Environment Variables Configuration
+
+You can configure which environment variables should have their values redacted in the `/_/info` endpoint to prevent exposing passwords, tokens, or other sensitive information.
+
+**Configuration Options:**
+
+1. **Explicit Environment Variable Names** - `SENSITIVE_ENVIRONMENTS`
+   - Comma-separated list of exact environment variable names (case-insensitive)
+   - Example: `SENSITIVE_ENVIRONMENTS="AWS_SECRET_ACCESS_KEY,GITHUB_TOKEN,DATABASE_PASSWORD"`
+
+2. **Regular Expression Patterns** - `SENSITIVE_ENVIRONMENTS_REGEX`
+   - Comma-separated list of regex patterns to match environment variable names
+   - Example: `SENSITIVE_ENVIRONMENTS_REGEX=".*_TOKEN$,.*_PASSWORD$,.*SECRET.*"`
+
+**How it works:**
+- Environment variables matching either explicit names or regex patterns will show `"(value is set)"` instead of their actual values
+- Non-matching environment variables will display their actual values
+- If neither configuration is set, all environment variables show their actual values
+
+**Example Configuration:**
+
+```bash
+# Redact specific variables by name
+export SENSITIVE_ENVIRONMENTS="AWS_SECRET_ACCESS_KEY,GITHUB_TOKEN,DOCKER_PASSWORD"
+
+# Redact variables matching patterns
+export SENSITIVE_ENVIRONMENTS_REGEX=".*_TOKEN$,.*_PASSWORD$,.*SECRET.*,.*KEY$"
+
+# You can use both together
+export SENSITIVE_ENVIRONMENTS="DATABASE_URL,API_KEY"
+export SENSITIVE_ENVIRONMENTS_REGEX=".*_PASS.*,.*_SECRET.*"
+```
+
+**Common Patterns:**
+
+```bash
+# Hide all tokens and passwords
+SENSITIVE_ENVIRONMENTS_REGEX=".*_TOKEN$,.*_PASSWORD$"
+
+# Hide all secrets and keys
+SENSITIVE_ENVIRONMENTS_REGEX=".*SECRET.*,.*_KEY$"
+
+# Hide AWS credentials
+SENSITIVE_ENVIRONMENTS_REGEX="AWS_.*"
+
+# Comprehensive pattern
+SENSITIVE_ENVIRONMENTS_REGEX=".*_TOKEN$,.*_PASSWORD$,.*SECRET.*,.*_KEY$,.*CREDENTIALS.*"
+```
 
 ## Docker
 
@@ -279,34 +350,101 @@ docker run -p 8080:8080 pmp-test-api
 
 ### Docker Compose
 
-The docker-compose.yaml includes the API service under the `app` profile, which allows flexible usage:
+The docker-compose.yaml includes multiple profiles for different use cases:
+
+#### Using bin scripts (Recommended)
+
+```bash
+# Start only test services (postgres, redis, httpbin) for local development
+./bin/up.sh
+
+# Start with app profile (all services including API)
+./bin/up.sh app
+
+# Start with integration-tests profile (includes app + hurl tests)
+./bin/up.sh integration-tests
+
+# Stop services
+./bin/down.sh
+
+# Stop services with specific profile
+./bin/down.sh app
+```
+
+#### Using docker compose directly
 
 ```bash
 # Option 1: Run only test services (postgres, redis, httpbin)
 # Good for local development with cargo run
-docker-compose up -d
+docker compose up -d
 
 # Option 2: Run the entire stack including the API
 # Good for testing the full containerized setup
-docker-compose --profile app up -d
+docker compose --profile app up -d
+
+# Option 3: Run integration tests
+docker compose --profile integration-tests up --abort-on-container-exit
 
 # Build and run the API with latest code changes
-docker-compose --profile app up -d --build
+docker compose --profile app up -d --build
 
 # View logs (all services)
-docker-compose logs -f
+docker compose logs -f
 
 # View logs (only app service)
-docker-compose logs -f app
+docker compose logs -f app
 
 # Stop the stack
-docker-compose down
+docker compose down
 
 # Stop and remove volumes
-docker-compose down -v
+docker compose down -v
 ```
 
+**Available Profiles**:
+- **(none)**: Base services only (PostgreSQL, Redis, HTTPBin)
+- **app**: Includes the PMP Test API application
+- **integration-tests**: Includes the app and Hurl integration test runner
+
 **Note**: The `app` service is configured with environment variables to automatically test all services in the docker-compose stack (PostgreSQL, Redis, and HTTPBin).
+
+## Integration Tests
+
+The project includes integration tests using [Hurl](https://hurl.dev/) that verify the API functionality in a real environment.
+
+### Running Integration Tests
+
+```bash
+# Run integration tests using the script
+./bin/up.sh integration-tests
+
+# Or using docker compose directly
+docker compose --profile integration-tests up --abort-on-container-exit
+
+# View test results
+docker compose logs hurl
+```
+
+### Test Files
+
+Integration tests are located in `resources/integration-tests/`:
+
+- **healthcheck.hurl**: Tests the health endpoint
+- **dashboard.hurl**: Tests the UI dashboard
+- **info.hurl**: Tests the info endpoint and validates check results
+
+### Adding New Tests
+
+Create `.hurl` files in the `resources/integration-tests/` directory following the Hurl format:
+
+```hurl
+# Example test
+GET http://app:8080/_/health
+
+HTTP 200
+[Asserts]
+header "Content-Type" == "text/plain"
+```
 
 ## Building for Production
 

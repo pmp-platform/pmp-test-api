@@ -40,6 +40,9 @@ tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
 # Environment variables
 dotenvy = "0.15"
 
+# Regular expressions
+regex = "1.10"
+
 # AWS SDK
 aws-config = { version = "1.5", features = ["behavior-version-latest"] }
 aws-sdk-s3 = "1.60"
