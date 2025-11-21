@@ -31,10 +31,10 @@ pub async fn execute_http_request(
 
     // Add body if present
     if let Some(body) = &request.body
-
-        && !body.is_empty() {
-            req_builder = req_builder.body(body.clone());
-        }
+        && !body.is_empty()
+    {
+        req_builder = req_builder.body(body.clone());
+    }
 
     match req_builder.send().await {
         Ok(response) => {
