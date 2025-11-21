@@ -321,6 +321,226 @@ pub async fn ui_handler() -> Response {
             opacity: 0.3;
         }
 
+        /* HTTP Request Form Styles */
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #495057;
+            font-size: 0.95rem;
+        }
+
+        .form-group input[type="text"],
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            font-family: 'Courier New', monospace;
+        }
+
+        .form-group input[type="text"]:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-group textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .url-group {
+            display: grid;
+            grid-template-columns: 150px 1fr;
+            gap: 15px;
+        }
+
+        .headers-container {
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            padding: 15px;
+            background: #f8f9fa;
+        }
+
+        .header-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 40px;
+            gap: 10px;
+            margin-bottom: 10px;
+            align-items: center;
+        }
+
+        .header-row input {
+            margin-bottom: 0;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-add {
+            background: #10b981;
+            color: white;
+            width: 100%;
+            justify-content: center;
+        }
+
+        .btn-remove {
+            background: #ef476f;
+            color: white;
+            padding: 8px;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .http-response-section {
+            display: none;
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 2px solid #e9ecef;
+        }
+
+        .http-response-section.active {
+            display: block;
+        }
+
+        .response-status {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            margin-bottom: 20px;
+        }
+
+        .response-headers,
+        .response-body {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .response-headers h3,
+        .response-body h3 {
+            margin-bottom: 15px;
+            color: #495057;
+            font-size: 1.1rem;
+        }
+
+        .header-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 12px;
+            background: white;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+        }
+
+        .header-key {
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .header-value {
+            color: #6c757d;
+            word-break: break-all;
+            margin-left: 20px;
+            text-align: right;
+        }
+
+        .response-body pre {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            color: #495057;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .loading-request {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .loading-request.active {
+            display: block;
+        }
+
+        .loading-request-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        .error-message {
+            background: #fee;
+            color: #c33;
+            padding: 15px 20px;
+            border-radius: 8px;
+            border-left: 4px solid #c33;
+            margin-top: 15px;
+        }
+
         .list-items {
             margin-top: 10px;
             padding-left: 20px;
@@ -437,6 +657,13 @@ pub async fn ui_handler() -> Response {
             const tabs = [];
             const tabContents = [];
 
+            // Always add HTTP Request tab first
+            tabs.push({ id: 'http-request', label: '🔧 HTTP Request', count: null });
+            tabContents.push({
+                id: 'http-request',
+                content: renderHttpRequestForm()
+            });
+
             // Count items for badges
             const counts = {
                 environments: data.environments ? Object.keys(data.environments).length : 0,
@@ -504,7 +731,7 @@ pub async fn ui_handler() -> Response {
             const tabsHtml = tabs.map((tab, index) => `
                 <button class="tab ${index === 0 ? 'active' : ''}" onclick="switchTab('${tab.id}')">
                     ${tab.label}
-                    <span class="tab-badge">${tab.count}</span>
+                    ${tab.count !== null ? `<span class="tab-badge">${tab.count}</span>` : ''}
                 </button>
             `).join('');
 
@@ -1076,11 +1303,257 @@ pub async fn ui_handler() -> Response {
             return String(text).replace(/[&<>"']/g, m => map[m]);
         }
 
+        // HTTP Request Form Functions
+        let headerCount = 0;
+
+        function renderHttpRequestForm() {
+            return `
+                <h2 class="section-header">HTTP Request Tester</h2>
+                <form id="requestForm" onsubmit="handleHttpRequest(event)">
+                    <div class="form-group">
+                        <label>URL & Method</label>
+                        <div class="url-group">
+                            <select id="method" required>
+                                <option value="GET">GET</option>
+                                <option value="POST">POST</option>
+                                <option value="PUT">PUT</option>
+                                <option value="DELETE">DELETE</option>
+                                <option value="PATCH">PATCH</option>
+                                <option value="OPTIONS">OPTIONS</option>
+                            </select>
+                            <input type="text" id="url" placeholder="https://api.example.com/endpoint" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Headers</label>
+                        <div class="headers-container">
+                            <div id="headersContainer"></div>
+                            <button type="button" class="btn btn-add" onclick="addHeader()">+ Add Header</button>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Request Body (Optional)</label>
+                        <textarea id="body" placeholder='{"key": "value"}'></textarea>
+                    </div>
+
+                    <div class="btn-group">
+                        <button type="submit" class="btn btn-primary">Send Request</button>
+                        <button type="button" class="btn btn-secondary" onclick="resetHttpForm()">Reset</button>
+                    </div>
+                </form>
+
+                <div class="loading-request" id="loadingRequest">
+                    <div class="loading-request-spinner"></div>
+                    <p>Sending request...</p>
+                </div>
+
+                <div class="http-response-section" id="httpResponseSection">
+                    <h2 class="section-header">Response</h2>
+                    <div id="httpResponseContent"></div>
+                </div>
+            `;
+        }
+
+        function addHeader() {
+            const container = document.getElementById('headersContainer');
+
+            if (!container) return;
+
+            const headerRow = document.createElement('div');
+            headerRow.className = 'header-row';
+            headerRow.id = `header-${headerCount}`;
+            headerRow.innerHTML = `
+                <input type="text" placeholder="Header name (e.g., Content-Type)" class="header-name">
+                <input type="text" placeholder="Header value (e.g., application/json)" class="header-value">
+                <button type="button" class="btn btn-remove" onclick="removeHeader(${headerCount})">×</button>
+            `;
+            container.appendChild(headerRow);
+            headerCount++;
+        }
+
+        function removeHeader(id) {
+            const element = document.getElementById(`header-${id}`);
+
+            if (element) {
+                element.remove();
+            }
+        }
+
+        function resetHttpForm() {
+            const form = document.getElementById('requestForm');
+
+            if (form) {
+                form.reset();
+            }
+
+            const container = document.getElementById('headersContainer');
+
+            if (container) {
+                container.innerHTML = '';
+            }
+
+            const responseSection = document.getElementById('httpResponseSection');
+
+            if (responseSection) {
+                responseSection.classList.remove('active');
+            }
+
+            headerCount = 0;
+            // Re-add initial header
+            setTimeout(addHeader, 0);
+        }
+
+        function getHeaders() {
+            const headers = {};
+            const headerRows = document.querySelectorAll('.header-row');
+
+            headerRows.forEach(row => {
+                const name = row.querySelector('.header-name').value.trim();
+                const value = row.querySelector('.header-value').value.trim();
+
+                if (name && value) {
+                    headers[name] = value;
+                }
+            });
+
+            return headers;
+        }
+
+        function displayHttpResponse(data) {
+            const responseContent = document.getElementById('httpResponseContent');
+
+            if (!responseContent) return;
+
+            const statusClass = data.success ? 'status-success' : 'status-error';
+            const statusText = data.success ? 'Success' : 'Error';
+
+            let html = `
+                <div class="response-status ${statusClass}">
+                    ${statusText}${data.status_code ? ` - ${data.status_code}` : ''}
+                </div>
+            `;
+
+            if (data.error) {
+                html += `
+                    <div class="error-message">
+                        <strong>Error:</strong> ${escapeHtml(data.error)}
+                    </div>
+                `;
+            }
+
+            if (data.headers && Object.keys(data.headers).length > 0) {
+                html += `
+                    <div class="response-headers">
+                        <h3>Response Headers</h3>
+                        ${Object.entries(data.headers).map(([key, value]) => `
+                            <div class="header-item">
+                                <span class="header-key">${escapeHtml(key)}</span>
+                                <span class="header-value">${escapeHtml(value)}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+
+            if (data.body) {
+                let formattedBody = data.body;
+                try {
+                    const parsed = JSON.parse(data.body);
+                    formattedBody = JSON.stringify(parsed, null, 2);
+                } catch (e) {
+                    // Not JSON, use as-is
+                }
+
+                html += `
+                    <div class="response-body">
+                        <h3>Response Body</h3>
+                        <pre>${escapeHtml(formattedBody)}</pre>
+                    </div>
+                `;
+            }
+
+            responseContent.innerHTML = html;
+
+            const responseSection = document.getElementById('httpResponseSection');
+
+            if (responseSection) {
+                responseSection.classList.add('active');
+            }
+        }
+
+        async function handleHttpRequest(event) {
+            event.preventDefault();
+
+            const urlField = document.getElementById('url');
+            const methodField = document.getElementById('method');
+            const bodyField = document.getElementById('body');
+
+            if (!urlField || !methodField || !bodyField) return;
+
+            const url = urlField.value.trim();
+            const method = methodField.value;
+            const body = bodyField.value.trim();
+            const headers = getHeaders();
+
+            const requestData = {
+                url,
+                method,
+                headers,
+                body: body || null
+            };
+
+            // Show loading
+            const loadingElement = document.getElementById('loadingRequest');
+            const responseSection = document.getElementById('httpResponseSection');
+
+            if (loadingElement) {
+                loadingElement.classList.add('active');
+            }
+
+            if (responseSection) {
+                responseSection.classList.remove('active');
+            }
+
+            try {
+                const response = await fetch('/api/http-client', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestData)
+                });
+
+                const data = await response.json();
+                displayHttpResponse(data);
+            } catch (error) {
+                displayHttpResponse({
+                    success: false,
+                    error: error.message,
+                    headers: {}
+                });
+            } finally {
+                if (loadingElement) {
+                    loadingElement.classList.remove('active');
+                }
+            }
+        }
+
         // Load data on page load
         loadData();
 
         // Refresh every 30 seconds
         setInterval(loadData, 30000);
+
+        // Initialize HTTP Request form with one header row after page loads
+        setTimeout(() => {
+            const currentTab = document.querySelector('.tab.active');
+
+            if (currentTab && currentTab.textContent.includes('HTTP Request')) {
+                addHeader();
+            }
+        }, 100);
     </script>
 </body>
 </html>

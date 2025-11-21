@@ -329,3 +329,43 @@ pub struct BedrockConfig {
     pub access_key_id: Option<String>,
     pub secret_access_key: Option<String>,
 }
+
+/// Request model for HTTP client UI
+#[derive(Debug, Serialize, Deserialize)]
+pub struct HttpClientRequest {
+    /// The URL to request
+    pub url: String,
+
+    /// HTTP method (GET, POST, PUT, DELETE, PATCH, OPTIONS)
+    pub method: String,
+
+    /// Request headers
+    #[serde(default)]
+    pub headers: HashMap<String, String>,
+
+    /// Optional request body
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub body: Option<String>,
+}
+
+/// Response model for HTTP client UI
+#[derive(Debug, Serialize, Deserialize)]
+pub struct HttpClientResponse {
+    /// Whether the request was successful
+    pub success: bool,
+
+    /// HTTP status code received
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub status_code: Option<u16>,
+
+    /// Response headers
+    pub headers: HashMap<String, String>,
+
+    /// Response body (as string)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub body: Option<String>,
+
+    /// Error message if request failed
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub error: Option<String>,
+}
