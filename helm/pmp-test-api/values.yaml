@@ -1,0 +1,9 @@
+# Default values for pmp-test-api
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# Values for the application chart dependency
+application:
+  image:
+    repository: ironedge/pmp-test-api
+    tag: latest

@@ -22,3 +22,6 @@ target
 
 # Other
 /nul
+
+# Helm
+helm/pmp-test-api/charts
