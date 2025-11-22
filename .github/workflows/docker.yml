@@ -8,14 +8,15 @@ on:
       - '*'
 
 env:
-  DOCKER_REPOSITORY_TYPE: "" # Leave empty for Docker Hub, or set to "aws" for AWS ECR
-  DOCKER_REPOSITORY: ironedge
+  DOCKER_REPOSITORY_TYPE: ${{ vars.DOCKER_REPOSITORY_TYPE || '' }} # Leave empty for Docker Hub, or set to "aws" for AWS ECR
+  DOCKER_REPOSITORY: ${{ vars.DOCKER_REPOSITORY || 'ironedge' }}
   DOCKER_IMAGE_NAME: ${{ github.event.repository.name }}
 
 jobs:
   build-and-push:
     name: Build and Push Docker Image (${{ matrix.platform }})
     runs-on: ${{ matrix.runner }}
+    if: matrix.arch == 'amd64' || github.event.repository.private == false
     strategy:
       matrix:
         include:
@@ -103,16 +104,28 @@ jobs:
         if: env.DOCKER_REPOSITORY_TYPE == 'aws'
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Create and push manifest for branch
-        if: github.ref_type == 'branch'
+      - name: Create and push manifest for branch (public repo)
+        if: github.ref_type == 'branch' && github.event.repository.private == false
         run: |
           docker buildx imagetools create -t ${{ env.DOCKER_REPOSITORY }}/${{ env.DOCKER_IMAGE_NAME }}:latest \
             ${{ env.DOCKER_REPOSITORY }}/${{ env.DOCKER_IMAGE_NAME }}:${{ github.ref_name }}-amd64 \
             ${{ env.DOCKER_REPOSITORY }}/${{ env.DOCKER_IMAGE_NAME }}:${{ github.ref_name }}-arm64
 
-      - name: Create and push manifest for tag
-        if: github.ref_type == 'tag'
+      - name: Create and push manifest for branch (private repo)
+        if: github.ref_type == 'branch' && github.event.repository.private == true
+        run: |
+          docker buildx imagetools create -t ${{ env.DOCKER_REPOSITORY }}/${{ env.DOCKER_IMAGE_NAME }}:latest \
+            ${{ env.DOCKER_REPOSITORY }}/${{ env.DOCKER_IMAGE_NAME }}:${{ github.ref_name }}-amd64
+
+      - name: Create and push manifest for tag (public repo)
+        if: github.ref_type == 'tag' && github.event.repository.private == false
         run: |
           docker buildx imagetools create -t ${{ env.DOCKER_REPOSITORY }}/${{ env.DOCKER_IMAGE_NAME }}:${{ github.ref_name }} \
             ${{ env.DOCKER_REPOSITORY }}/${{ env.DOCKER_IMAGE_NAME }}:${{ github.ref_name }}-amd64 \
             ${{ env.DOCKER_REPOSITORY }}/${{ env.DOCKER_IMAGE_NAME }}:${{ github.ref_name }}-arm64
+
+      - name: Create and push manifest for tag (private repo)
+        if: github.ref_type == 'tag' && github.event.repository.private == true
+        run: |
+          docker buildx imagetools create -t ${{ env.DOCKER_REPOSITORY }}/${{ env.DOCKER_IMAGE_NAME }}:${{ github.ref_name }} \
+            ${{ env.DOCKER_REPOSITORY }}/${{ env.DOCKER_IMAGE_NAME }}:${{ github.ref_name }}-amd64
