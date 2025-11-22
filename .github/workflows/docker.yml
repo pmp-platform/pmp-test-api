@@ -6,6 +6,7 @@ on:
       - main
 
 env:
+  DOCKER_REPOSITORY_TYPE: "" # Leave empty for Docker Hub, or set to "aws" for AWS ECR
   DOCKER_REPOSITORY: ironedge
   DOCKER_IMAGE_NAME: ${{ github.event.repository.name }}
 
@@ -31,10 +32,23 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Log in to Docker Hub
+        if: env.DOCKER_REPOSITORY_TYPE == '' || env.DOCKER_REPOSITORY_TYPE == null
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Configure AWS credentials
+        if: env.DOCKER_REPOSITORY_TYPE == 'aws'
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Log in to Amazon ECR
+        if: env.DOCKER_REPOSITORY_TYPE == 'aws'
+        uses: aws-actions/amazon-ecr-login@v2
 
       - name: Extract metadata
         id: meta
@@ -69,10 +83,23 @@ jobs:
 
     steps:
       - name: Log in to Docker Hub
+        if: env.DOCKER_REPOSITORY_TYPE == '' || env.DOCKER_REPOSITORY_TYPE == null
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Configure AWS credentials
+        if: env.DOCKER_REPOSITORY_TYPE == 'aws'
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Log in to Amazon ECR
+        if: env.DOCKER_REPOSITORY_TYPE == 'aws'
+        uses: aws-actions/amazon-ecr-login@v2
 
       - name: Create and push manifest for branch
         run: |
