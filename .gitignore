@@ -24,4 +24,4 @@ target
 /nul
 
 # Helm
-helm/pmp-test-api/charts
+helm/charts
