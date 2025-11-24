@@ -1,6 +1,6 @@
 dependencies:
 - name: application
   repository: https://comfortablynumb.github.io/pmp-helm-charts
-  version: 0.0.6
-digest: sha256:77bb29bcfbad71eb01a52b4a81fe87585347d727a8580dcefcc76dc977fa129e
-generated: "2025-11-23T21:05:53.9185666-03:00"
+  version: 0.0.7
+digest: sha256:4f1d6372ac6c40f4dbb02bf96c88a9805ffdfc8ea131f27826dbc9b84611dd8e
+generated: "2025-11-23T21:20:56.4171467-03:00"
