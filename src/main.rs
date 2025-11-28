@@ -1,9 +1,11 @@
 mod check;
 mod env_parser;
 mod handlers;
+mod metrics;
 mod models;
 mod routes;
 
+use metrics::create_metric_layer;
 use routes::create_router;
 use std::env;
 use tokio::net::TcpListener;
@@ -37,8 +39,13 @@ async fn main() -> anyhow::Result<()> {
 
     info!("Binding to {}", addr);
 
-    // Create router with tracing layer
-    let app = create_router().layer(TraceLayer::new_for_http());
+    // Create prometheus metrics layer and state
+    let (metric_layer, metrics_state) = create_metric_layer();
+
+    // Create router with metrics and tracing layers
+    let app = create_router(metrics_state)
+        .layer(metric_layer)
+        .layer(TraceLayer::new_for_http());
 
     // Create TCP listener
     let listener = TcpListener::bind(&addr).await?;
@@ -47,6 +54,7 @@ async fn main() -> anyhow::Result<()> {
     info!("Dashboard: http://{}/", addr);
     info!("Health endpoint: http://{}/_/health", addr);
     info!("Info endpoint: http://{}/_/info", addr);
+    info!("Metrics endpoint: http://{}/metrics", addr);
 
     // Start the server
     axum::serve(listener, app).await?;

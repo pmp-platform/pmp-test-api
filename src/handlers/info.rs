@@ -16,7 +16,10 @@ use tracing::{info, instrument};
 /// Returns comprehensive information about the system and all configured checks
 #[instrument]
 pub async fn info_handler() -> Json<InfoResponse> {
-    info!("Processing info request");
+    info!(
+        event = "info_request_started",
+        "Processing info request"
+    );
 
     // Get all environment variables
     let environments = get_all_env_vars();
@@ -167,7 +170,31 @@ pub async fn info_handler() -> Json<InfoResponse> {
         None
     };
 
-    info!("Info request completed");
+    // Count checks performed
+    let sql_count = sql_results.as_ref().map(|r| r.len()).unwrap_or(0);
+    let nosql_count = nosql_results.as_ref().map(|r| r.len()).unwrap_or(0);
+    let http_count = http_results.as_ref().map(|r| r.len()).unwrap_or(0);
+    let s3_count = s3_results.as_ref().map(|r| r.len()).unwrap_or(0);
+    let memorydb_count = memorydb_results.as_ref().map(|r| r.len()).unwrap_or(0);
+    let secrets_manager_count = secrets_manager_results.as_ref().map(|r| r.len()).unwrap_or(0);
+    let dynamodb_count = dynamodb_results.as_ref().map(|r| r.len()).unwrap_or(0);
+    let bedrock_count = bedrock_results.as_ref().map(|r| r.len()).unwrap_or(0);
+    let total_checks = sql_count + nosql_count + http_count + s3_count + memorydb_count
+        + secrets_manager_count + dynamodb_count + bedrock_count;
+
+    info!(
+        event = "info_request_completed",
+        sql_checks = sql_count,
+        nosql_checks = nosql_count,
+        http_checks = http_count,
+        s3_checks = s3_count,
+        memorydb_checks = memorydb_count,
+        secrets_manager_checks = secrets_manager_count,
+        dynamodb_checks = dynamodb_count,
+        bedrock_checks = bedrock_count,
+        total_checks = total_checks,
+        "Info request completed successfully"
+    );
 
     Json(InfoResponse {
         environments,

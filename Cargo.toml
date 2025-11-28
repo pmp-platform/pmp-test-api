@@ -12,6 +12,11 @@ axum = "0.7"
 tower = "0.4"
 tower-http = { version = "0.5", features = ["trace", "cors"] }
 
+# Metrics
+prometheus = "0.13"
+axum-prometheus = "0.7"
+metrics-exporter-prometheus = "0.15"
+
 # Async runtime
 tokio = { version = "1", features = ["full"] }
 futures = "0.3"
