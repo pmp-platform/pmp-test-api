@@ -10,11 +10,23 @@ use crate::env_parser::{
 use crate::models::InfoResponse;
 use axum::Json;
 use std::collections::HashMap;
-use tracing::{info, instrument};
+use tracing::{info, instrument, Span};
 
 /// Info endpoint handler
 /// Returns comprehensive information about the system and all configured checks
-#[instrument]
+#[instrument(
+    skip_all,
+    fields(
+        sql_configs,
+        nosql_configs,
+        http_configs,
+        s3_configs,
+        memorydb_configs,
+        secrets_manager_configs,
+        dynamodb_configs,
+        bedrock_configs
+    )
+)]
 pub async fn info_handler() -> Json<InfoResponse> {
     info!(
         event = "info_request_started",
@@ -33,6 +45,17 @@ pub async fn info_handler() -> Json<InfoResponse> {
     let secrets_manager_configs = parse_secrets_manager_configs();
     let dynamodb_configs = parse_dynamodb_configs();
     let bedrock_configs = parse_bedrock_configs();
+
+    // Record configuration counts in the current span
+    let current_span = Span::current();
+    current_span.record("sql_configs", sql_configs.len());
+    current_span.record("nosql_configs", nosql_configs.len());
+    current_span.record("http_configs", http_configs.len());
+    current_span.record("s3_configs", s3_configs.len());
+    current_span.record("memorydb_configs", memorydb_configs.len());
+    current_span.record("secrets_manager_configs", secrets_manager_configs.len());
+    current_span.record("dynamodb_configs", dynamodb_configs.len());
+    current_span.record("bedrock_configs", bedrock_configs.len());
 
     // Run all SQL checks concurrently
     let sql_results = if !sql_configs.is_empty() {
