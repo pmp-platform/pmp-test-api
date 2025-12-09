@@ -132,16 +132,12 @@ fn log_otel_status(config: &OtelConfig) {
         return;
     }
 
-    let traces = format_exporter_status(&config.traces_exporter);
-    let metrics = format_exporter_status(&config.metrics_exporter);
-    let logs = format_exporter_status(&config.logs_exporter);
-
     info!(
         endpoint = %config.endpoint,
         protocol = ?config.protocol,
-        traces = %traces,
-        metrics = %metrics,
-        logs = %logs,
+        traces = %format_exporter_status(&config.traces_exporter),
+        metrics = %format_exporter_status(&config.metrics_exporter),
+        logs = %format_exporter_status(&config.logs_exporter),
         "OpenTelemetry enabled"
     );
 }
