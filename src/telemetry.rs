@@ -35,8 +35,6 @@ pub struct OtelConfig {
     pub metrics_exporter: ExporterType,
     /// Logs exporter type (OTEL_LOGS_EXPORTER)
     pub logs_exporter: ExporterType,
-    /// Log export activity to console (OTEL_LOG_EXPORTS)
-    pub log_exports: bool,
     /// Collector endpoint URL (OTEL_EXPORTER_OTLP_ENDPOINT)
     pub endpoint: String,
     /// Protocol type (OTEL_EXPORTER_OTLP_PROTOCOL)
@@ -87,7 +85,6 @@ impl OtelConfig {
             traces_exporter: parse_exporter_type("OTEL_TRACES_EXPORTER", ExporterType::Otlp),
             metrics_exporter: parse_exporter_type("OTEL_METRICS_EXPORTER", ExporterType::None),
             logs_exporter: parse_exporter_type("OTEL_LOGS_EXPORTER", ExporterType::None),
-            log_exports: parse_bool_env("OTEL_LOG_EXPORTS", false),
             endpoint: env::var("OTEL_EXPORTER_OTLP_ENDPOINT")
                 .unwrap_or_else(|_| "http://localhost:4317".to_string()),
             protocol: parse_protocol(),
@@ -109,13 +106,11 @@ fn create_resource(service_name: &str) -> Resource {
 }
 
 fn init_tracer_provider(config: &OtelConfig) -> Result<TracerProvider, Box<dyn std::error::Error>> {
-    if config.log_exports {
-        info!(
-            endpoint = %config.endpoint,
-            protocol = ?config.protocol,
-            "Initializing OpenTelemetry tracer"
-        );
-    }
+    info!(
+        endpoint = %config.endpoint,
+        protocol = ?config.protocol,
+        "Initializing OpenTelemetry tracer"
+    );
 
     let resource = create_resource(&config.service_name);
 
@@ -144,21 +139,17 @@ fn init_tracer_provider(config: &OtelConfig) -> Result<TracerProvider, Box<dyn s
         }
     };
 
-    if config.log_exports {
-        info!("OpenTelemetry tracer initialized successfully");
-    }
+    info!("OpenTelemetry tracer initialized successfully");
 
     Ok(provider)
 }
 
 fn init_meter_provider(config: &OtelConfig) -> Result<SdkMeterProvider, Box<dyn std::error::Error>> {
-    if config.log_exports {
-        info!(
-            endpoint = %config.endpoint,
-            protocol = ?config.protocol,
-            "Initializing OpenTelemetry meter"
-        );
-    }
+    info!(
+        endpoint = %config.endpoint,
+        protocol = ?config.protocol,
+        "Initializing OpenTelemetry meter"
+    );
 
     let resource = create_resource(&config.service_name);
 
@@ -199,9 +190,7 @@ fn init_meter_provider(config: &OtelConfig) -> Result<SdkMeterProvider, Box<dyn 
         }
     };
 
-    if config.log_exports {
-        info!("OpenTelemetry meter initialized successfully");
-    }
+    info!("OpenTelemetry meter initialized successfully");
 
     Ok(provider)
 }
@@ -209,13 +198,11 @@ fn init_meter_provider(config: &OtelConfig) -> Result<SdkMeterProvider, Box<dyn 
 fn init_logger_provider(
     config: &OtelConfig,
 ) -> Result<LoggerProvider, Box<dyn std::error::Error>> {
-    if config.log_exports {
-        info!(
-            endpoint = %config.endpoint,
-            protocol = ?config.protocol,
-            "Initializing OpenTelemetry logger"
-        );
-    }
+    info!(
+        endpoint = %config.endpoint,
+        protocol = ?config.protocol,
+        "Initializing OpenTelemetry logger"
+    );
 
     let resource = create_resource(&config.service_name);
 
@@ -244,24 +231,20 @@ fn init_logger_provider(
         }
     };
 
-    if config.log_exports {
-        info!("OpenTelemetry logger initialized successfully");
-    }
+    info!("OpenTelemetry logger initialized successfully");
 
     Ok(provider)
 }
 
 /// Initialize all enabled OpenTelemetry providers
 pub fn init_telemetry(config: &OtelConfig) -> Result<OtelProviders, Box<dyn std::error::Error>> {
-    if config.log_exports {
-        info!(
-            service_name = %config.service_name,
-            traces = ?config.traces_exporter,
-            metrics = ?config.metrics_exporter,
-            logs = ?config.logs_exporter,
-            "Initializing OpenTelemetry"
-        );
-    }
+    info!(
+        service_name = %config.service_name,
+        traces = ?config.traces_exporter,
+        metrics = ?config.metrics_exporter,
+        logs = ?config.logs_exporter,
+        "Initializing OpenTelemetry"
+    );
 
     let tracer_provider = if config.traces_exporter == ExporterType::Otlp {
         Some(init_tracer_provider(config)?)

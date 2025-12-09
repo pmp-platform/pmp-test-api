@@ -281,7 +281,6 @@ The API supports exporting traces, metrics, and logs via OpenTelemetry Protocol 
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | `http://localhost:4317` | OTLP collector endpoint |
 | `OTEL_EXPORTER_OTLP_PROTOCOL` | `grpc` | Protocol (`grpc` or `http`) |
 | `OTEL_SERVICE_NAME` | `pmp-test-api` | Service name for telemetry |
-| `OTEL_LOG_EXPORTS` | `false` | Log export initialization to console |
 
 **Default Behavior:**
 - When `OTEL_SDK_DISABLED=false` (default), traces are exported by default
