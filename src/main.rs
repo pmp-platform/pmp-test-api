@@ -8,9 +8,10 @@ mod telemetry;
 
 use metrics::create_metric_layer;
 use opentelemetry::trace::TracerProvider;
+use opentelemetry_appender_tracing::layer::OpenTelemetryTracingBridge;
 use routes::create_router;
 use std::env;
-use telemetry::{init_tracer, OtelConfig};
+use telemetry::{init_telemetry, ExporterType, OtelConfig, OtelProviders};
 use tokio::net::TcpListener;
 use tower_http::trace::TraceLayer;
 use tracing::info;
@@ -24,59 +25,11 @@ async fn main() -> anyhow::Result<()> {
     // Load OpenTelemetry configuration
     let otel_config = OtelConfig::from_env();
 
-    // Initialize OpenTelemetry if enabled
-    let _tracer_provider = if otel_config.enabled {
-        match init_tracer(&otel_config) {
-            Ok(provider) => {
-                // Set up tracing subscriber with OpenTelemetry layer
-                let tracer = provider.tracer("pmp-test-api");
-                let telemetry_layer = tracing_opentelemetry::layer().with_tracer(tracer);
-
-                tracing_subscriber::registry()
-                    .with(
-                        tracing_subscriber::EnvFilter::try_from_default_env()
-                            .unwrap_or_else(|_| "info,pmp_test_api=debug".into()),
-                    )
-                    .with(tracing_subscriber::fmt::layer())
-                    .with(telemetry_layer)
-                    .init();
-
-                Some(provider)
-            }
-            Err(e) => {
-                eprintln!("Failed to initialize OpenTelemetry: {}", e);
-                // Fall back to standard tracing
-                tracing_subscriber::registry()
-                    .with(
-                        tracing_subscriber::EnvFilter::try_from_default_env()
-                            .unwrap_or_else(|_| "info,pmp_test_api=debug".into()),
-                    )
-                    .with(tracing_subscriber::fmt::layer())
-                    .init();
-                None
-            }
-        }
-    } else {
-        // Standard tracing without OpenTelemetry
-        tracing_subscriber::registry()
-            .with(
-                tracing_subscriber::EnvFilter::try_from_default_env()
-                    .unwrap_or_else(|_| "info,pmp_test_api=debug".into()),
-            )
-            .with(tracing_subscriber::fmt::layer())
-            .init();
-        None
-    };
+    // Initialize OpenTelemetry if not disabled and any exporter is enabled
+    let _otel_providers = init_otel_and_tracing(&otel_config);
 
     info!("Starting pmp-test-api");
-
-    if otel_config.enabled {
-        info!(
-            otel_endpoint = %otel_config.endpoint,
-            otel_protocol = ?otel_config.protocol,
-            "OpenTelemetry enabled"
-        );
-    }
+    log_otel_status(&otel_config);
 
     // Get port from environment or use default
     let port = env::var("PORT")
@@ -85,7 +38,6 @@ async fn main() -> anyhow::Result<()> {
         .unwrap_or(8080);
 
     let addr = format!("0.0.0.0:{}", port);
-
     info!("Binding to {}", addr);
 
     // Create prometheus metrics layer and state
@@ -109,4 +61,95 @@ async fn main() -> anyhow::Result<()> {
     axum::serve(listener, app).await?;
 
     Ok(())
+}
+
+fn init_otel_and_tracing(config: &OtelConfig) -> Option<OtelProviders> {
+    if config.disabled || !config.is_any_enabled() {
+        init_standard_tracing();
+        return None;
+    }
+
+    match init_telemetry(config) {
+        Ok(providers) => {
+            init_tracing_with_otel(config.service_name.clone(), &providers);
+            Some(providers)
+        }
+        Err(e) => {
+            eprintln!("Failed to initialize OpenTelemetry: {}", e);
+            init_standard_tracing();
+            None
+        }
+    }
+}
+
+fn init_tracing_with_otel(service_name: String, providers: &OtelProviders) {
+    let env_filter = tracing_subscriber::EnvFilter::try_from_default_env()
+        .unwrap_or_else(|_| "info,pmp_test_api=debug".into());
+
+    let fmt_layer = tracing_subscriber::fmt::layer();
+    let registry = tracing_subscriber::registry().with(env_filter).with(fmt_layer);
+
+    match (&providers.tracer_provider, &providers.logger_provider) {
+        (Some(tracer_provider), Some(logger_provider)) => {
+            let tracer = tracer_provider.tracer(service_name);
+            let telemetry_layer = tracing_opentelemetry::layer().with_tracer(tracer);
+            let logs_layer = OpenTelemetryTracingBridge::new(logger_provider);
+            registry.with(telemetry_layer).with(logs_layer).init();
+        }
+        (Some(tracer_provider), None) => {
+            let tracer = tracer_provider.tracer(service_name);
+            let telemetry_layer = tracing_opentelemetry::layer().with_tracer(tracer);
+            registry.with(telemetry_layer).init();
+        }
+        (None, Some(logger_provider)) => {
+            let logs_layer = OpenTelemetryTracingBridge::new(logger_provider);
+            registry.with(logs_layer).init();
+        }
+        (None, None) => {
+            registry.init();
+        }
+    }
+}
+
+fn init_standard_tracing() {
+    tracing_subscriber::registry()
+        .with(
+            tracing_subscriber::EnvFilter::try_from_default_env()
+                .unwrap_or_else(|_| "info,pmp_test_api=debug".into()),
+        )
+        .with(tracing_subscriber::fmt::layer())
+        .init();
+}
+
+fn log_otel_status(config: &OtelConfig) {
+    if config.disabled {
+        info!("OpenTelemetry SDK disabled");
+        return;
+    }
+
+    if !config.is_any_enabled() {
+        info!("OpenTelemetry: no exporters enabled");
+        return;
+    }
+
+    let traces = format_exporter_status(&config.traces_exporter);
+    let metrics = format_exporter_status(&config.metrics_exporter);
+    let logs = format_exporter_status(&config.logs_exporter);
+
+    info!(
+        endpoint = %config.endpoint,
+        protocol = ?config.protocol,
+        traces = %traces,
+        metrics = %metrics,
+        logs = %logs,
+        "OpenTelemetry enabled"
+    );
+}
+
+fn format_exporter_status(exporter: &ExporterType) -> &'static str {
+    match exporter {
+        ExporterType::Otlp => "otlp",
+        ExporterType::Console => "console",
+        ExporterType::None => "none",
+    }
 }

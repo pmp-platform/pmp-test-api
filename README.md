@@ -268,6 +268,50 @@ BEDROCK_MAIN_REGION=us-east-1
 - `PORT`: Server port (default: `8080`)
 - `RUST_LOG`: Logging level (default: `info,pmp_test_api=debug`)
 
+### OpenTelemetry Configuration
+
+The API supports exporting traces, metrics, and logs via OpenTelemetry Protocol (OTLP). Configuration follows the [OpenTelemetry specification](https://opentelemetry.io/docs/specs/otel/configuration/sdk-environment-variables/).
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `OTEL_SDK_DISABLED` | `false` | Disable all OpenTelemetry functionality |
+| `OTEL_TRACES_EXPORTER` | `otlp` | Traces exporter (`otlp`, `console`, `none`) |
+| `OTEL_METRICS_EXPORTER` | `none` | Metrics exporter (`otlp`, `console`, `none`) |
+| `OTEL_LOGS_EXPORTER` | `none` | Logs exporter (`otlp`, `console`, `none`) |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | `http://localhost:4317` | OTLP collector endpoint |
+| `OTEL_EXPORTER_OTLP_PROTOCOL` | `grpc` | Protocol (`grpc` or `http`) |
+| `OTEL_SERVICE_NAME` | `pmp-test-api` | Service name for telemetry |
+| `OTEL_LOG_EXPORTS` | `false` | Log export initialization to console |
+
+**Default Behavior:**
+- When `OTEL_SDK_DISABLED=false` (default), traces are exported by default
+- Metrics and logs require explicit opt-in via `OTEL_METRICS_EXPORTER=otlp` and `OTEL_LOGS_EXPORTER=otlp`
+
+**Example - Enable all signals:**
+
+```bash
+OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317
+OTEL_TRACES_EXPORTER=otlp
+OTEL_METRICS_EXPORTER=otlp
+OTEL_LOGS_EXPORTER=otlp
+OTEL_SERVICE_NAME=my-service
+```
+
+**Example - Disable OpenTelemetry completely:**
+
+```bash
+OTEL_SDK_DISABLED=true
+```
+
+**Example - Traces only (default):**
+
+```bash
+OTEL_EXPORTER_OTLP_ENDPOINT=http://collector:4317
+# OTEL_TRACES_EXPORTER defaults to otlp
+# OTEL_METRICS_EXPORTER defaults to none
+# OTEL_LOGS_EXPORTER defaults to none
+```
+
 ### Sensitive Environment Variables Configuration
 
 You can configure which environment variables should have their values redacted in the `/_/info` endpoint to prevent exposing passwords, tokens, or other sensitive information.
